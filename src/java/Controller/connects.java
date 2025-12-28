@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
+
 package Controller;
 
 import DataBase.JDBC;
@@ -9,8 +6,6 @@ import Model.InforUser;
 import com.jcraft.jsch.*;
 import com.jcraft.jsch.Session;
 import java.io.IOException;
-import java.io.PrintWriter;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -32,10 +27,45 @@ import java.util.logging.Level;
 public class connects extends HttpServlet {
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String choose = request.getParameter("choose");
+        String message = "";
+        String errmessage = "";
+        try {
+            if (choose.equals("clear")) {
+                JDBC connectJDBC = new JDBC();
+                Connection conn = (Connection) connectJDBC.connect();
+                PreparedStatement pstm = conn.prepareStatement("DELETE FROM `tai_khoan` WHERE Disabled=1");
+                int result = pstm.executeUpdate();
+                if (result > 0) {
+                    errmessage = "Xóa các máy đã từng kết nối thành công ";
+                } else {
+                    errmessage = "Không có máy để xóa ";
+                }
+
+                request.setAttribute("errmessage", errmessage);
+                request.getRequestDispatcher("/trangchu.jsp").forward(request, response);
+            } else if (choose.equals("trangchu")) {
+                HttpSession ss = request.getSession();
+                ss.removeAttribute("services");
+                ss.removeAttribute("outputLines");
+                ss.removeAttribute("exitStatus");
+                System.out.println("Da xoa session services, outputLines, exitStatus");
+                request.getRequestDispatcher("./trangchu.jsp").forward(request, response);
+            }
+        } catch (Exception e) {
+            errmessage = "Lỗi" + e.toString();
+            request.setAttribute("errmessage", errmessage);
+            request.getRequestDispatcher("/trangchu.jsp").forward(request, response);
+        }
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String choose = request.getParameter("choose");
         String[] selected = request.getParameterValues("selected");
-        List<InforUser> users = new ArrayList<>();
+        String vitri = request.getParameter("vitri");
+        System.out.println("Chon: " + choose + " // Select: " + selected);
         if (selected != null) {
             for (String host : selected) {
                 // Lấy giá trị của user tương ứng với host
@@ -53,37 +83,65 @@ public class connects extends HttpServlet {
                         pstm.setString(1, host);
                         pstm.setString(2, user);
                         pstm.executeUpdate();
-                        String message = "Xóa" + host + " thành công !!!";
+                        String message = "Xóa máy IP: " + host + " thành công ";
                         request.setAttribute("message", message);
                     } catch (ClassNotFoundException | SQLException e) {
-                        String message = "Xóa" + host + " thất bại!!!";
+                        String message = "Xóa máy IP: " + host + " thất bại";
                         request.setAttribute("message", message);
                     }
                     request.getRequestDispatcher("/Connect.jsp").forward(request, response);
-                } else {
+                } else if (choose.equals("connects")) {
                     if (password.isEmpty()) {
-                        String message = "Vui lòng nhập mật khẩu host: " + host + " user:" + user;
-                        request.setAttribute("message", message);
+                        String errmessage = "Vui lòng nhập mật khẩu host: " + host + "";
+                        request.setAttribute("errmessage", errmessage);
+                        if (vitri.equals("trangChu")) {
+                            request.getRequestDispatcher("/trangchu.jsp").forward(request, response);
+                        }
                         request.getRequestDispatcher("/Connect.jsp").forward(request, response);
+
                     } else {
                         try {
                             HttpSession ss = request.getSession();
-                            JDBC connectJDBC = new JDBC();
-                            Connection conn = (Connection) connectJDBC.connect();
-                            PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isConnecting`='1', `Connected`='0', `port`=? WHERE host=? and user=?");
-                            pstm.setInt(1, port);
-                            pstm.setString(2, host);
-                            pstm.setString(3, user);
-                            pstm.executeUpdate();
                             //Tao phien session
                             Session session = InforUser.connect(host, port, user, password);
-                            System.out.println("Ket noi thanh cong:  " + host + "/" + port + "/" + user + "/" + password + "/");
-                            users.add(new InforUser(host, port, user, password, 1, 0));
-                            if (ss.getAttribute("users") == null) {
-                                ss.setAttribute("users", users);
+                            System.out.println("Da ket noi den " + user +"@"+ host);
+//                            users.add(new InforUser(host, port, user, password, 1, 0));
+
+                            JDBC connectJDBC = new JDBC();
+                            Connection conn = (Connection) connectJDBC.connect();
+                            //log_history
+                            PreparedStatement logfile = conn.prepareStatement("INSERT INTO `log_history`(`host`, `port`, `user`, `Enabled`, `Disabled`) VALUES (?,?,?,1,0)");
+                            logfile.setString(1, host);
+                            logfile.setInt(2, port);
+                            logfile.setString(3, user);
+                            logfile.executeUpdate();
+                            //tai_khoan
+//                            PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isEnabled`='1', `Disabled`='0', `port`=?, `user`=?, `password`=? WHERE host=?");
+                            PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isEnabled`='1', `Disabled`='0', `port`=?, `user`=? WHERE host=?");
+                            pstm.setInt(1, port);
+                            pstm.setString(2, user);
+                            pstm.setString(3, host);
+                            pstm.executeUpdate();
+                            List<InforUser> sessionUsers = (List<InforUser>) ss.getAttribute("users");
+                            if (sessionUsers == null) {
+                                sessionUsers = new ArrayList<>();
+                                sessionUsers.add(new InforUser(host, port, user, password, 1, 0));
+                                ss.setAttribute("users", sessionUsers);
                             } else {
-                                ss.setAttribute("users", users);
+                                // Kiểm tra nếu người dùng chưa tồn tại trong danh sách thì mới thêm
+                                boolean exists = false;
+                                for (InforUser iu : sessionUsers) {
+                                    if (iu.getHost().equals(host)) {
+                                        exists = true;
+                                        break;
+                                    }
+                                }
+                                if (!exists) {
+                                    sessionUsers.add(new InforUser(host, port, user, password, 1, 0));
+                                }
+                                ss.setAttribute("users", sessionUsers);
                             }
+
                             session.disconnect();
 
                         } catch (JSchException e) {
@@ -91,17 +149,19 @@ public class connects extends HttpServlet {
                                 System.out.println("Ket noi toi: " + host + " that bai: " + e.getMessage());
                                 JDBC connectJDBC = new JDBC();
                                 Connection conn = (Connection) connectJDBC.connect();
-                                PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isConnecting`='0', `Connected`='1', `port`=? WHERE host=? and user=?");
+                                PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isEnabled`='0', `Disabled`='1', `port`=? WHERE host=?");
                                 pstm.setInt(1, port);
                                 pstm.setString(2, host);
-                                pstm.setString(3, user);
                                 pstm.executeUpdate();
-                                String message = "Kết nối tới: " + host + " thất bại !!!";
-                                request.setAttribute("message", message);
+                                String errmessage = "Kết nối tới: " + host + " thất bại ";
+                                request.setAttribute("errmessage", errmessage);
+                                if (vitri.equals("trangChu")) {
+                                    request.getRequestDispatcher("/trangchu.jsp").forward(request, response);
+                                }
+                                HttpSession ss = request.getSession();
+                                ss.removeAttribute("users");
                                 request.getRequestDispatcher("/Connect.jsp").forward(request, response);
-                            } catch (ClassNotFoundException ex) {
-                                java.util.logging.Logger.getLogger(connects.class.getName()).log(Level.SEVERE, null, ex);
-                            } catch (SQLException ex) {
+                            } catch (ClassNotFoundException | SQLException ex) {
                                 java.util.logging.Logger.getLogger(connects.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         } catch (ClassNotFoundException | SQLException ex) {
@@ -113,8 +173,11 @@ public class connects extends HttpServlet {
             }
             request.getRequestDispatcher("/trangchu.jsp").forward(request, response);
         } else {
-            String message = "Vui lòng chọn máy cần thực hiện ";
-            request.setAttribute("message", message);
+            String errmessage = "Vui lòng chọn máy cần thực hiện ";
+            request.setAttribute("errmessage", errmessage);
+            if (vitri.equals("trangChu")) {
+                request.getRequestDispatcher("/trangchu.jsp").forward(request, response);
+            }
             request.getRequestDispatcher("/Connect.jsp").forward(request, response);
         }
     }

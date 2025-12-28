@@ -27,13 +27,14 @@ public class InforUser {
     private int port;
     private String user;
     private String password;
-    private int isConnecting;
-    private int Connected;
+    private int isEnabled;
+    private int Disabled;
 
     //start
     public static InforUser vd() {
         return new InforUser();
     }
+
     public ArrayList<InforUser> selectAll() {
         ArrayList<InforUser> kq = new ArrayList<InforUser>();
         try {
@@ -47,9 +48,9 @@ public class InforUser {
                 int port = rs.getInt("port");
                 String user = rs.getString("user");
                 String password = rs.getString("password");
-                int isConnecting = rs.getInt("isConnecting");
-                int Connected = rs.getInt("Connected");
-                InforUser u = new InforUser(host, port, user, password, isConnecting, Connected);
+                int isEnabled = rs.getInt("isEnabled");
+                int Disabled = rs.getInt("Disabled");
+                InforUser u = new InforUser(host, port, user, password, isEnabled, Disabled);
                 kq.add(u);
             }
         } catch (Exception e) {
@@ -58,17 +59,28 @@ public class InforUser {
         return kq;
     }
     //end
-    
+
     public static Session connect(String host, int port, String username, String password) throws JSchException {
         JSch jsch = new JSch();
         Session session = jsch.getSession(username, host, port);
-        session.setPassword(password);
+        
+        // Thêm SSH key
+        try {
+            // Đường dẫn đến private key
+            String privateKeyPath = System.getProperty("user.home") + "/.ssh/id_rsa";
+            jsch.addIdentity(privateKeyPath);
+        } catch (JSchException e) {
+            // Nếu không tìm thấy SSH key, sử dụng password
+            session.setPassword(password);
+        }
+        
+        // Cấu hình session
         session.setConfig("StrictHostKeyChecking", "no");
+        session.setConfig("PreferredAuthentications", "publickey,password");
         session.connect();
         return session;
     }
-    
-    
+
     public InforUser(String host, int port, String user) {
         this.host = host;
         this.port = port;
@@ -82,16 +94,14 @@ public class InforUser {
         this.password = password;
     }
 
-    public InforUser(String host, int port, String user, String password, int isConnecting, int Connected) {
+    public InforUser(String host, int port, String user, String password, int isEnabled, int Disabled) {
         this.host = host;
         this.port = port;
         this.user = user;
         this.password = password;
-        this.isConnecting = isConnecting;
-        this.Connected = Connected;
+        this.isEnabled = isEnabled;
+        this.Disabled = Disabled;
     }
-
-    
 
     /**
      * @return the host
@@ -149,20 +159,20 @@ public class InforUser {
         this.password = password;
     }
 
-    public int getIsConnecting() {
-        return isConnecting;
+    public int getisEnabled() {
+        return isEnabled;
     }
 
-    public void setIsConnecting(int isConnecting) {
-        this.isConnecting = isConnecting;
+    public void setisEnabled(int isEnabled) {
+        this.isEnabled = isEnabled;
     }
 
-    public int getConnected() {
-        return Connected;
+    public int getDisabled() {
+        return Disabled;
     }
 
-    public void setConnected(int Connected) {
-        this.Connected = Connected;
+    public void setDisabled(int Disabled) {
+        this.Disabled = Disabled;
     }
 
 }

@@ -12,21 +12,14 @@
         <title>Footer</title>
         <style>
             .footer{
-                position: absolute;
-                bottom: 0;
-                width: 100%;
-                background-color: #E95420;
-                border-radius: 5px;
-                text-align: center;
+                background: linear-gradient(#ee4d2d,#ff7337);
                 color: white;
-                height: 38px;
             }
-            
         </style>
     </head>
     <body>
-        <div class="footer">
-            <p>&copy; Nguyen Minh Thanh B2104824</p>
+        <div class="footer text-center p-1 position-relative bottom-0">
+            &copy; Niên luận ngành - Quản Lý Lưu Trữ by Nguyễn Minh Thành B2104824
         </div>
     </body>
 </html>

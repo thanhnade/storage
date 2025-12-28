@@ -1,12 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controller;
 
 import DataBase.JDBC;
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -15,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,7 +18,7 @@ import java.util.List;
 
 /**
  *
- * @author This PC
+ * @author acer
  */
 @WebServlet(name = "logout", urlPatterns = {"/logout"})
 public class logout extends HttpServlet {
@@ -32,55 +26,76 @@ public class logout extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Lấy thông tin người dùng cần xóa từ request (host và user)
-        String host = request.getParameter("host");
-        String username = request.getParameter("user");
+        // Lấy tham số hành động
+        String action = request.getParameter("action");
 
         try {
-            //Logfile
-            JDBC connectJDBC = new JDBC();
-            Connection conn = (Connection) connectJDBC.connect();
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM `tai_khoan` WHERE user=? and host=?");
-            ps.setString(1, username);
-            ps.setString(2, host);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isConnecting`='0',`Connected`='1' WHERE user = ? ");
-                pstm.setString(1, username);
-                pstm.executeUpdate();
-                // Phản hồi kết quả
-//                String message = "Đã đăng xuất máy chủ";
-//                request.setAttribute("message", message);
-//                request.getRequestDispatcher("/Connect.jsp").forward(request, response);
-            }
             // Lấy session hiện tại
             HttpSession session = request.getSession();
-
-            // Lấy danh sách users từ session
             List<InforUser> users = (List<InforUser>) session.getAttribute("users");
 
-            // Tìm và xóa người dùng tương ứng dựa trên host và username
-            if (users != null) {
-                users.removeIf(user -> user.getHost().equals(host) && user.getUser().equals(username));
-            }else{
-                response.sendRedirect("./Connect.jsp");
-            }
-           
-            // Cập nhật danh sách users trong session
-            session.setAttribute("users", users);
-            // Redirect về trang chính hoặc trang khác
-            response.sendRedirect("./trangchu.jsp");
+            if ("logoutAll".equals(action)) {
+                // Đăng xuất tất cả người dùng
+                if (users != null && !users.isEmpty()) {
+                    JDBC connectJDBC = new JDBC();
+                    Connection conn = (Connection) connectJDBC.connect();
 
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(logout.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SQLException ex) {
+                    for (InforUser user : users) {
+                        String host = user.getHost();
+                        String username = user.getUser();
+                        int port = user.getPort();
+
+                        // Ghi log lịch sử
+                        PreparedStatement logfile = conn.prepareStatement("INSERT INTO `log_history`(`host`, `port`, `user`, `Enabled`, `Disabled`) VALUES (?,?,?,0,1)");
+                        logfile.setString(1, host);
+                        logfile.setInt(2, port);
+                        logfile.setString(3, username);
+                        logfile.executeUpdate();
+
+                        // Cập nhật trạng thái tài khoản
+                        PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isEnabled`='0',`Disabled`='1' WHERE user = ? AND host = ?");
+                        pstm.setString(1, username);
+                        pstm.setString(2, host);
+                        pstm.executeUpdate();
+                    }
+
+                    // Xóa danh sách người dùng khỏi session
+                    users.clear();
+                    session.setAttribute("users", users);
+                }
+
+                // Redirect về trang chính
+                response.sendRedirect("./Connect.jsp");
+            } else {
+                // Logic xử lý đăng xuất từng người dùng như đã có
+                String host = request.getParameter("host");
+                String ports = request.getParameter("port");
+                String username = request.getParameter("user");
+                int port = Integer.parseInt(ports);
+
+                if (users != null) {
+                    users.removeIf(user -> user.getHost().equals(host));
+                    JDBC connectJDBC = new JDBC();
+                    Connection conn = (Connection) connectJDBC.connect();
+
+                    PreparedStatement logfile = conn.prepareStatement("INSERT INTO `log_history`(`host`, `port`, `user`, `Enabled`, `Disabled`) VALUES (?,?,?,0,1)");
+                    logfile.setString(1, host);
+                    logfile.setInt(2, port);
+                    logfile.setString(3, username);
+                    logfile.executeUpdate();
+
+                    PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isEnabled`='0',`Disabled`='1' WHERE user = ? ");
+                    pstm.setString(1, username);
+                    pstm.executeUpdate();
+
+                    session.setAttribute("users", users);
+                }
+
+                response.sendRedirect("./trangchu.jsp");
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(logout.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
 
 }
