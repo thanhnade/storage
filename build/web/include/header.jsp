@@ -16,9 +16,7 @@
                 font-family: Arial, sans-serif;
             }
             .navbar {
-                position: relative;
-                top: 0;
-                background-color: #E95420;
+                background: linear-gradient(#ee4d2d,#ff7337);
                 color: white;
                 display: flex;
                 align-items: center;
@@ -52,18 +50,36 @@
                 display: block;
             }
 
+
         </style>
     </head>
     <body>
-        <div class="navbar">
+        <div class="navbar fixed-top">
             <div class="logo">
-                <a href="<%=request.getContextPath()%>/trangchu.jsp"> TRANG CHỦ</a>
+                <a href="./trangchu.jsp">
+                    TRANG CHỦ
+                </a>
             </div>
             <div>
                 <ul class="menu mt-2 mb-2">
+                    <li><a href="./StorageControl">Quản lý người dùng</a></li>
                     <li><a href="#">Giới thiệu</a></li>
-                    <li><a href="#">Dịch vụ</a></li>
-                    <li><a href="#">Liên hệ</a></li>
+                    <!--<li><a href="#">Hỗ trợ</a></li>-->
+                    <li><a href="https://zalo.me/0794220424">Liên hệ</a></li>
+                    <li>
+                        <a
+                           onclick="return confirm('Bạn có chắc chắn muốn đăng xuất không?')"
+                           href="StorageServlet?action=logout">
+                            <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                        </a>
+                    </li>
+<!--                    <li>
+                        <form action="logout" method="get">
+                            <button class="btn btn-link d-block text-white text-decoration-none p-0 px-3 text-center" type="submit" name="action" value="logoutAll" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất tất cả không?');">
+                                Đăng xuất tất cả
+                            </button>
+                        </form>
+                    </li>-->
                 </ul>
             </div>
         </div>

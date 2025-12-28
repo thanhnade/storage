@@ -11,7 +11,6 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -41,12 +40,12 @@ public class shutdown extends HttpServlet {
         String ports = request.getParameter("port");
         String username = request.getParameter("user");
         String password = request.getParameter("password");
-        
+
         int port = Integer.parseInt(ports);
         Session session = null;
         ChannelExec channelExec = null;
 
-        try {           
+        try {
             JSch jsch = new JSch();
             session = jsch.getSession(username, host, port);
             session.setPassword(password);
@@ -86,17 +85,19 @@ public class shutdown extends HttpServlet {
             //Logfile
             JDBC connectJDBC = new JDBC();
             Connection conn = (Connection) connectJDBC.connect();
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM `tai_khoan` WHERE user=?");
-            ps.setString(1, username);
+            PreparedStatement logfile = conn.prepareStatement("INSERT INTO `log_history`(`host`, `port`, `user`, `Enabled`, `Disabled`) VALUES (?,?,?,1,0)");
+            logfile.setString(1, host);
+            logfile.setInt(2, port);
+            logfile.setString(3, username);
+            logfile.executeUpdate();
+
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM `tai_khoan` WHERE host=?");
+            ps.setString(1, host);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isConnecting`='0',`Connected`='1' WHERE user = ? ");
-                pstm.setString(1, username);
+                PreparedStatement pstm = conn.prepareStatement("UPDATE `tai_khoan` SET `isEnabled`='0',`Disabled`='1' WHERE host = ? ");
+                pstm.setString(1, host);
                 pstm.executeUpdate();
-                // Phản hồi kết quả
-//                String message = "Đã shutdown máy chủ" + host;
-//                request.setAttribute("message", message);
-//                request.getRequestDispatcher("/Connect.jsp").forward(request, response);
             }
             // Lấy session hiện tại
             HttpSession ss = request.getSession();
@@ -106,21 +107,22 @@ public class shutdown extends HttpServlet {
 
             // Tìm và xóa người dùng tương ứng dựa trên host và username
             if (users != null) {
-                users.removeIf(user -> user.getHost().equals(host) && user.getUser().equals(username));
+                users.removeIf(user -> user.getHost().equals(host));
+            } else {
+                response.sendRedirect("./Connect.jsp");
             }
 
             // Cập nhật danh sách users trong session
             ss.setAttribute("users", users);
-            // Redirect về trang chính hoặc trang khác
+
+            // Redirect về trang chính
             response.sendRedirect("./trangchu.jsp");
 
         } catch (JSchException e) {
             String message = "Không thể kết nối đến máy chủ" + host;
             request.setAttribute("message", message);
             request.getRequestDispatcher("./trangchu.jsp").forward(request, response);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(shutdown.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SQLException ex) {
+        } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(shutdown.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             if (channelExec != null && channelExec.isConnected()) {

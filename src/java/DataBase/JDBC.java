@@ -13,7 +13,7 @@ import java.sql.SQLException;
  * @author admin
  */
 public class JDBC {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/nlcs?autoReconnect=true&useSSL=false";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/storage?autoReconnect=true&useSSL=false";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "";
     public Connection connect() throws ClassNotFoundException {
@@ -23,9 +23,9 @@ public class JDBC {
         try {
             conn = DriverManager
                     .getConnection(DB_URL, DB_USER, DB_PASSWORD);
-            System.out.println("Kết nối thành công DataBase");
+            System.out.println("Ket noi thanh cong DataBase");
         } catch (SQLException e) {
-            System.out.println("Kết nối thất bại");
+            System.out.println("Ket noi that bai DB");
             e.printStackTrace();
         }
         return conn;
