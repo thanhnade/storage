@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Storage App (Jetty)",
+            "request": "launch",
+            "mainClass": "org.eclipse.jetty.maven.plugin.JettyRunMojo",
+            "projectName": "storage",
+            "args": "",
+            "vmArgs": "-Djetty.http.port=8080"
+        },
+        {
+            "type": "java",
+            "name": "Debug Storage App",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005
+        },
+        {
+            "type": "java",
+            "name": "Run Java Application",
+            "request": "launch",
+            "mainClass": "${workspaceFolder}/src/java"
+        }
+    ]
+}
+

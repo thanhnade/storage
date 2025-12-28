@@ -7,6 +7,18 @@ nbdist/
 nbactions.xml
 .nb-gradle/
 
+# Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
 # Compiled class files
 *.class
 
@@ -34,8 +46,9 @@ nbactions.xml
 hs_err_pid*
 
 # IDE - VSCode
-.vscode/
+.vscode/settings.json
 *.code-workspace
+# Giữ lại .vscode/extensions.json và launch.json để team có thể share config
 
 # IDE - IntelliJ IDEA
 .idea/

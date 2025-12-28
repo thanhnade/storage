@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>com.ctuniversity</groupId>
+    <artifactId>storage</artifactId>
+    <version>1.0.0</version>
+    <packaging>war</packaging>
+    
+    <name>Storage Management System</name>
+    <description>Storage Management System - Quản lý lưu trữ đa máy chủ</description>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.target>18</maven.compiler.target>
+        <jakartaee.version>10.0.0</jakartaee.version>
+        <junit.version>5.10.0</junit.version>
+        <failOnMissingWebXml>false</failOnMissingWebXml>
+    </properties>
+    
+    <dependencies>
+        <!-- Jakarta EE Web Profile API -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <version>${jakartaee.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- JSch - SSH Client -->
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.55</version>
+        </dependency>
+        
+        <!-- MySQL Connector -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>9.0.0</version>
+        </dependency>
+        
+        <!-- Gson - JSON processing -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.12.1</version>
+        </dependency>
+        
+        <!-- JUnit for testing (optional) -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <finalName>Storage</finalName>
+        <sourceDirectory>src/java</sourceDirectory>
+        
+        <plugins>
+            <!-- Maven Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>18</source>
+                    <target>18</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            
+            <!-- Maven WAR Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <warSourceDirectory>web</warSourceDirectory>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+            
+            <!-- Maven Resources Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            
+            <!-- GlassFish Maven Plugin (optional - for deployment) -->
+            <plugin>
+                <groupId>org.glassfish.maven.plugin</groupId>
+                <artifactId>maven-glassfish-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <glassfishDirectory>${glassfish.home}</glassfishDirectory>
+                    <user>${glassfish.user}</user>
+                    <adminPassword>${glassfish.password}</adminPassword>
+                    <domain>
+                        <name>${glassfish.domain}</name>
+                        <httpPort>8080</httpPort>
+                    </domain>
+                    <components>
+                        <component>
+                            <name>${project.artifactId}</name>
+                            <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+                        </component>
+                    </components>
+                </configuration>
+            </plugin>
+            
+            <!-- Jetty Plugin (alternative - for quick testing) -->
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>11.0.18</version>
+                <configuration>
+                    <webApp>
+                        <contextPath>/</contextPath>
+                        <descriptor>${basedir}/web/WEB-INF/web.xml</descriptor>
+                    </webApp>
+                    <webAppSourceDirectory>${basedir}/web</webAppSourceDirectory>
+                    <scanTargets>
+                        <scanTarget>${basedir}/src/java</scanTarget>
+                        <scanTarget>${basedir}/web</scanTarget>
+                    </scanTargets>
+                    <scanIntervalSeconds>10</scanIntervalSeconds>
+                    <stopKey>STOP</stopKey>
+                    <stopPort>9998</stopPort>
+                    <httpConnector>
+                        <port>8080</port>
+                    </httpConnector>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
